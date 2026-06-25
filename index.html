@@ -133,14 +133,25 @@ main { display:flex; flex-direction:column; min-height:100vh; }
 .metric:hover { border-color:var(--b2); }
 .metric::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--grad); }
 .metric-val { font-family:'Fraunces',serif; font-size:36px; font-weight:600; line-height:1; margin-bottom:6px; background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.metric-label-row { display:flex; align-items:center; justify-content:center; gap:5px; }
 .metric-label { font-size:10px; color:var(--mut); letter-spacing:0.1em; text-transform:uppercase; }
 .metric-sub { font-size:10px; color:var(--mut); margin-top:4px; }
 
+/* TOOLTIP "?" — mismo patrón que el Hub, CSS-only hover */
+.tip-wrap { position:relative; display:inline-flex; align-items:center; }
+.metric-tip-btn { width:14px; height:14px; border-radius:50%; border:0.5px solid currentColor; background:transparent; color:var(--mut); font-size:8px; cursor:default; display:flex; align-items:center; justify-content:center; opacity:0.55; transition:opacity 0.15s; flex-shrink:0; font-family:'Inter',sans-serif; line-height:1; }
+.tip-wrap:hover .metric-tip-btn { opacity:1; color:var(--acc); }
+.metric-tip-box { display:none; position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%); width:220px; background:var(--s3); border:0.5px solid var(--b2); border-radius:10px; padding:12px 14px; font-size:11px; color:var(--sub); line-height:1.6; z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.5); pointer-events:none; text-align:left; text-transform:none; letter-spacing:normal; font-weight:400; }
+.tip-wrap:hover .metric-tip-box { display:block; animation:fi 0.15s ease; }
+.metric-tip-box strong { color:var(--tx); }
+
 /* TREND CHART */
-.trend-wrap { display:flex; align-items:flex-end; gap:6px; height:140px; padding-top:10px; }
-.trend-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; height:100%; justify-content:flex-end; }
+.trend-wrap { display:flex; align-items:flex-end; gap:6px; height:140px; padding-top:24px; }
+.trend-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; height:100%; justify-content:flex-end; position:relative; }
 .trend-bar { width:100%; max-width:28px; border-radius:4px 4px 0 0; background:var(--grad); transition:height 0.5s ease; min-height:2px; position:relative; }
 .trend-bar:hover { opacity:0.85; }
+.trend-val { font-size:10px; color:var(--mut); font-family:'Inter',sans-serif; line-height:1; margin-bottom:4px; white-space:nowrap; }
+.trend-val.zero { opacity:0.45; }
 .trend-day { font-size:10px; color:var(--mut); }
 
 /* DISTRIBUTION CHARTS */
@@ -375,19 +386,43 @@ main { display:flex; flex-direction:column; min-height:100vh; }
       <div class="metric-grid">
         <div class="metric">
           <div class="metric-val" id="kpi-total">0</div>
-          <div class="metric-label" id="t-kpi-total">Llamadas totales</div>
+          <div class="metric-label-row">
+            <div class="metric-label" id="t-kpi-total">Llamadas totales</div>
+            <div class="tip-wrap">
+              <button class="metric-tip-btn">?</button>
+              <div class="metric-tip-box" id="t-tip-total">Total de llamadas que Vera atendió en el período seleccionado.</div>
+            </div>
+          </div>
         </div>
         <div class="metric">
           <div class="metric-val" id="kpi-cierre">0%</div>
-          <div class="metric-label" id="t-kpi-cierre">Tasa de cierre</div>
+          <div class="metric-label-row">
+            <div class="metric-label" id="t-kpi-cierre">Tasa de finalización</div>
+            <div class="tip-wrap">
+              <button class="metric-tip-btn">?</button>
+              <div class="metric-tip-box" id="t-tip-cierre"><strong>% de llamadas que llegaron al final del guion.</strong> No significa que el cliente compró o agendó una visita — solo que Vera completó la calificación hasta el cierre conversacional, sin que la llamada se cortara antes.</div>
+            </div>
+          </div>
         </div>
         <div class="metric">
           <div class="metric-val" id="kpi-duracion">0:00</div>
-          <div class="metric-label" id="t-kpi-duracion">Duración promedio</div>
+          <div class="metric-label-row">
+            <div class="metric-label" id="t-kpi-duracion">Duración promedio</div>
+            <div class="tip-wrap">
+              <button class="metric-tip-btn">?</button>
+              <div class="metric-tip-box" id="t-tip-duracion">Tiempo promedio que dura una llamada con Vera, de inicio a fin.</div>
+            </div>
+          </div>
         </div>
         <div class="metric">
           <div class="metric-val" id="kpi-followup">0</div>
-          <div class="metric-label" id="t-kpi-followup">WhatsApp enviados</div>
+          <div class="metric-label-row">
+            <div class="metric-label" id="t-kpi-followup">WhatsApp enviados</div>
+            <div class="tip-wrap">
+              <button class="metric-tip-btn">?</button>
+              <div class="metric-tip-box" id="t-tip-followup">De las llamadas finalizadas con teléfono válido, cuántas recibieron el mensaje de seguimiento por WhatsApp con las propiedades sugeridas.</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -423,8 +458,8 @@ main { display:flex; flex-direction:column; min-height:100vh; }
         <div class="card">
           <div class="calls-toolbar">
             <button class="filter-btn active" data-filtro="all" onclick="filtrarLlamadas('all')" id="t-filter-all">Todas</button>
-            <button class="filter-btn" data-filtro="closed" onclick="filtrarLlamadas('closed')" id="t-filter-closed">Cerradas</button>
-            <button class="filter-btn" data-filtro="open" onclick="filtrarLlamadas('open')" id="t-filter-open">Sin cerrar</button>
+            <button class="filter-btn" data-filtro="closed" onclick="filtrarLlamadas('closed')" id="t-filter-closed">Finalizadas</button>
+            <button class="filter-btn" data-filtro="open" onclick="filtrarLlamadas('open')" id="t-filter-open">Abandonadas</button>
             <div class="search-input-wrap">
               <input type="text" id="call-search" placeholder="Buscar por nombre o zona..." oninput="renderLlamadas()">
             </div>
@@ -462,7 +497,11 @@ const T = {
     page_sub_llamadas: "historial de conversaciones",
     period_hoy: "Hoy", period_semana: "Semana", period_mes: "Mes", period_todo: "Todo",
     kpi_total: "Llamadas totales",
-    kpi_cierre: "Tasa de cierre",
+    kpi_cierre: "Tasa de finalización",
+    tip_total: "Total de llamadas que Vera atendió en el período seleccionado.",
+    tip_cierre: "<strong>% de llamadas que llegaron al final del guion.</strong> No significa que el cliente compró o agendó una visita — solo que Vera completó la calificación hasta el cierre conversacional, sin que la llamada se cortara antes.",
+    tip_duracion: "Tiempo promedio que dura una llamada con Vera, de inicio a fin.",
+    tip_followup: "De las llamadas finalizadas con teléfono válido, cuántas recibieron el mensaje de seguimiento por WhatsApp con las propiedades sugeridas.",
     kpi_duracion: "Duración promedio",
     kpi_followup: "WhatsApp enviados",
     sec_tendencia: "llamadas por día",
@@ -470,7 +509,7 @@ const T = {
     sec_operacion: "tipo de operación",
     sec_tipoprop: "tipo de propiedad buscado",
     sec_llamadas: "registro de llamadas",
-    filter_all: "Todas", filter_closed: "Cerradas", filter_open: "Sin cerrar",
+    filter_all: "Todas", filter_closed: "Finalizadas", filter_open: "Abandonadas",
     search_ph: "Buscar por nombre o zona...",
     loading_text: "Cargando datos de Vera...",
     empty_title: "Aún no hay llamadas",
@@ -479,10 +518,10 @@ const T = {
     modal_datos: "datos capturados", modal_resumen: "resumen de la llamada",
     d_nombre: "Nombre", d_telefono: "Teléfono", d_zona: "Zona", d_tipo: "Tipo de propiedad",
     d_operacion: "Operación", d_presupuesto: "Presupuesto", d_habitaciones: "Habitaciones",
-    d_duracion: "Duración", d_cierre: "Cierre", d_followup: "WhatsApp",
+    d_duracion: "Duración", d_cierre: "Finalizada", d_followup: "WhatsApp",
     si: "Sí", no: "No",
     venta: "Venta", alquiler: "Alquiler",
-    cerrada: "Cerrada", abierta: "Sin cerrar"
+    cerrada: "Finalizada", abierta: "Abandonada"
   },
   en: {
     login_title: "Vera · Voice Analytics",
@@ -497,7 +536,11 @@ const T = {
     page_sub_llamadas: "conversation history",
     period_hoy: "Today", period_semana: "Week", period_mes: "Month", period_todo: "All",
     kpi_total: "Total calls",
-    kpi_cierre: "Closing rate",
+    kpi_cierre: "Completion rate",
+    tip_total: "Total calls Vera handled in the selected period.",
+    tip_cierre: "<strong>% of calls that reached the end of the script.</strong> It doesn't mean the client bought or booked a visit — only that Vera completed the qualification through the conversational close, without the call dropping early.",
+    tip_duracion: "Average length of a call with Vera, start to finish.",
+    tip_followup: "Of the completed calls with a valid phone number, how many received the WhatsApp follow-up with suggested properties.",
     kpi_duracion: "Avg. duration",
     kpi_followup: "WhatsApp sent",
     sec_tendencia: "calls per day",
@@ -505,7 +548,7 @@ const T = {
     sec_operacion: "operation type",
     sec_tipoprop: "property type requested",
     sec_llamadas: "call log",
-    filter_all: "All", filter_closed: "Closed", filter_open: "Open",
+    filter_all: "All", filter_closed: "Completed", filter_open: "Abandoned",
     search_ph: "Search by name or area...",
     loading_text: "Loading Vera's data...",
     empty_title: "No calls yet",
@@ -514,10 +557,10 @@ const T = {
     modal_datos: "captured data", modal_resumen: "call summary",
     d_nombre: "Name", d_telefono: "Phone", d_zona: "Area", d_tipo: "Property type",
     d_operacion: "Operation", d_presupuesto: "Budget", d_habitaciones: "Rooms",
-    d_duracion: "Duration", d_cierre: "Closed", d_followup: "WhatsApp",
+    d_duracion: "Duration", d_cierre: "Completed", d_followup: "WhatsApp",
     si: "Yes", no: "No",
     venta: "Sale", alquiler: "Rent",
-    cerrada: "Closed", abierta: "Open"
+    cerrada: "Completed", abierta: "Abandoned"
   }
 };
 let currentLang = 'es';
@@ -685,6 +728,14 @@ function applyLang() {
     const el = document.getElementById(id);
     if (el) el.textContent = t(map[id]);
   }
+  const tipMap = {
+    't-tip-total': 'tip_total', 't-tip-cierre': 'tip_cierre',
+    't-tip-duracion': 'tip_duracion', 't-tip-followup': 'tip_followup'
+  };
+  for (const id in tipMap) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = t(tipMap[id]);
+  }
   document.getElementById('call-search').placeholder = t('search_ph');
   const activePanel = document.querySelector('.panel.active').id.replace('panel-', '');
   document.getElementById('page-title').textContent = t('nav_' + activePanel);
@@ -791,6 +842,7 @@ function renderTrend(calls) {
     const h = Math.max((c.count / max) * 100, c.count > 0 ? 8 : 2);
     const label = c.date.toLocaleDateString(currentLang === 'en' ? 'en-US' : 'es-ES', { weekday: 'narrow' });
     return `<div class="trend-col">
+      <div class="trend-val${c.count === 0 ? ' zero' : ''}">${c.count}</div>
       <div class="trend-bar" style="height:${h}%" title="${c.count}"></div>
       <div class="trend-day">${label}</div>
     </div>`;
