@@ -72,6 +72,9 @@ aside { background:var(--s1); border-right:0.5px solid var(--b1); display:flex; 
 .status-pill { display:flex; align-items:center; gap:7px; font-size:11px; color:var(--sub); }
 .dot { width:6px; height:6px; border-radius:50%; background:var(--grn); flex-shrink:0; animation:pulse 2.5s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+.footer-brand { display:flex; align-items:center; gap:5px; margin-top:10px; padding-top:10px; border-top:0.5px solid var(--b1); opacity:0.5; }
+.footer-brand-text { font-size:9px; color:var(--mut); letter-spacing:0.04em; white-space:nowrap; }
+.footer-brand-logo { height:11px; width:auto; opacity:0.85; }
 
 /* MAIN */
 main { display:flex; flex-direction:column; min-height:100vh; }
@@ -137,13 +140,14 @@ main { display:flex; flex-direction:column; min-height:100vh; }
 .metric-label { font-size:10px; color:var(--mut); letter-spacing:0.1em; text-transform:uppercase; }
 .metric-sub { font-size:10px; color:var(--mut); margin-top:4px; }
 
-/* TOOLTIP "?" — mismo patrón que el Hub, CSS-only hover */
+/* TOOLTIP "?" — tooltip global con position:fixed, posicionado por JS
+   (mismo patrón usado en el Hub para evitar que se corte en los bordes) */
 .tip-wrap { position:relative; display:inline-flex; align-items:center; }
-.metric-tip-btn { width:14px; height:14px; border-radius:50%; border:0.5px solid currentColor; background:transparent; color:var(--mut); font-size:8px; cursor:default; display:flex; align-items:center; justify-content:center; opacity:0.55; transition:opacity 0.15s; flex-shrink:0; font-family:'Inter',sans-serif; line-height:1; }
+.metric-tip-btn { width:14px; height:14px; border-radius:50%; border:0.5px solid currentColor; background:transparent; color:var(--mut); font-size:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0.55; transition:opacity 0.15s; flex-shrink:0; font-family:'Inter',sans-serif; line-height:1; }
 .tip-wrap:hover .metric-tip-btn { opacity:1; color:var(--acc); }
-.metric-tip-box { display:none; position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%); width:220px; background:var(--s3); border:0.5px solid var(--b2); border-radius:10px; padding:12px 14px; font-size:11px; color:var(--sub); line-height:1.6; z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.5); pointer-events:none; text-align:left; text-transform:none; letter-spacing:normal; font-weight:400; }
-.tip-wrap:hover .metric-tip-box { display:block; animation:fi 0.15s ease; }
-.metric-tip-box strong { color:var(--tx); }
+#metric-tooltip-global { display:none; position:fixed; width:220px; max-width:calc(100vw - 32px); background:var(--s3); border:0.5px solid var(--b2); border-radius:10px; padding:12px 14px; font-size:11px; color:var(--sub); line-height:1.6; z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.5); pointer-events:none; text-align:left; }
+#metric-tooltip-global.show { display:block; animation:fi 0.15s ease; }
+#metric-tooltip-global strong { color:var(--tx); }
 
 /* TREND CHART */
 .trend-wrap { display:flex; align-items:flex-end; gap:6px; height:140px; padding-top:24px; }
@@ -304,9 +308,16 @@ main { display:flex; flex-direction:column; min-height:100vh; }
     </nav>
     <div class="drawer-footer">
       <div class="status-pill"><div class="dot"></div><span id="drawer-conn-status">Conectando...</span></div>
+      <div class="footer-brand">
+        <span class="footer-brand-text" id="t-footer-brand-drawer">Powered by</span>
+        <img src="https://raw.githubusercontent.com/Juan-OM26/ls.operamente.html/main/public/OM%20Logoo.png" alt="Operamente" class="footer-brand-logo">
+      </div>
     </div>
   </div>
 </div>
+
+<!-- TOOLTIP GLOBAL (fixed, posicionado por JS — evita que se corte en los bordes) -->
+<div id="metric-tooltip-global"></div>
 
 <!-- LOADING -->
 <div class="loading-overlay" id="loading-overlay">
@@ -350,6 +361,10 @@ main { display:flex; flex-direction:column; min-height:100vh; }
   <div class="sidebar-footer">
     <div class="status-pill"><div class="dot"></div><span id="conn-status">Conectando...</span></div>
     <div style="font-size:10px;color:var(--mut);margin-top:5px;" id="sidebar-date"></div>
+    <div class="footer-brand">
+      <span class="footer-brand-text" id="t-footer-brand">Powered by</span>
+      <img src="https://raw.githubusercontent.com/Juan-OM26/ls.operamente.html/main/public/OM%20Logoo.png" alt="Operamente" class="footer-brand-logo">
+    </div>
   </div>
 </aside>
 
@@ -389,8 +404,7 @@ main { display:flex; flex-direction:column; min-height:100vh; }
           <div class="metric-label-row">
             <div class="metric-label" id="t-kpi-total">Llamadas totales</div>
             <div class="tip-wrap">
-              <button class="metric-tip-btn">?</button>
-              <div class="metric-tip-box" id="t-tip-total">Total de llamadas que Vera atendió en el período seleccionado.</div>
+              <button class="metric-tip-btn" data-tip-id="tip_total">?</button>
             </div>
           </div>
         </div>
@@ -399,8 +413,7 @@ main { display:flex; flex-direction:column; min-height:100vh; }
           <div class="metric-label-row">
             <div class="metric-label" id="t-kpi-cierre">Tasa de finalización</div>
             <div class="tip-wrap">
-              <button class="metric-tip-btn">?</button>
-              <div class="metric-tip-box" id="t-tip-cierre"><strong>% de llamadas que llegaron al final del guion.</strong> No significa que el cliente compró o agendó una visita — solo que Vera completó la calificación hasta el cierre conversacional, sin que la llamada se cortara antes.</div>
+              <button class="metric-tip-btn" data-tip-id="tip_cierre">?</button>
             </div>
           </div>
         </div>
@@ -409,8 +422,7 @@ main { display:flex; flex-direction:column; min-height:100vh; }
           <div class="metric-label-row">
             <div class="metric-label" id="t-kpi-duracion">Duración promedio</div>
             <div class="tip-wrap">
-              <button class="metric-tip-btn">?</button>
-              <div class="metric-tip-box" id="t-tip-duracion">Tiempo promedio que dura una llamada con Vera, de inicio a fin.</div>
+              <button class="metric-tip-btn" data-tip-id="tip_duracion">?</button>
             </div>
           </div>
         </div>
@@ -419,8 +431,7 @@ main { display:flex; flex-direction:column; min-height:100vh; }
           <div class="metric-label-row">
             <div class="metric-label" id="t-kpi-followup">WhatsApp enviados</div>
             <div class="tip-wrap">
-              <button class="metric-tip-btn">?</button>
-              <div class="metric-tip-box" id="t-tip-followup">De las llamadas finalizadas con teléfono válido, cuántas recibieron el mensaje de seguimiento por WhatsApp con las propiedades sugeridas.</div>
+              <button class="metric-tip-btn" data-tip-id="tip_followup">?</button>
             </div>
           </div>
         </div>
@@ -491,6 +502,7 @@ const T = {
     login_btn: "Ingresar",
     login_error: "Contraseña incorrecta",
     logo_sub: "vera · agente de voz",
+    footer_brand: "Powered by",
     nav_resumen: "Resumen", dnav_resumen: "Resumen",
     nav_llamadas: "Llamadas", dnav_llamadas: "Llamadas",
     page_sub_resumen: "desempeño del agente de voz",
@@ -530,6 +542,7 @@ const T = {
     login_btn: "Sign in",
     login_error: "Incorrect password",
     logo_sub: "vera · voice agent",
+    footer_brand: "Powered by",
     nav_resumen: "Overview", dnav_resumen: "Overview",
     nav_llamadas: "Calls", dnav_llamadas: "Calls",
     page_sub_resumen: "voice agent performance",
@@ -645,6 +658,38 @@ function updateDateLocale() {
 checkAuth();
 
 // ============================================================
+// TOOLTIP GLOBAL — position:fixed calculado por JS, nunca se corta
+// (mismo patrón usado en el Hub para resolver el recorte en los bordes)
+// ============================================================
+function initMetricTooltips() {
+  const tipEl = document.getElementById('metric-tooltip-global');
+  document.querySelectorAll('.metric-tip-btn').forEach(btn => {
+    btn.addEventListener('mouseenter', () => {
+      const key = btn.dataset.tipId;
+      tipEl.innerHTML = t(key);
+      tipEl.classList.add('show');
+
+      const rect = btn.getBoundingClientRect();
+      const tipRect = tipEl.getBoundingClientRect();
+      const margin = 12;
+
+      let left = rect.left + rect.width / 2 - tipRect.width / 2;
+      left = Math.max(margin, Math.min(left, window.innerWidth - tipRect.width - margin));
+
+      let top = rect.top - tipRect.height - 10;
+      if (top < margin) top = rect.bottom + 10;
+
+      tipEl.style.left = left + 'px';
+      tipEl.style.top = top + 'px';
+    });
+    btn.addEventListener('mouseleave', () => {
+      tipEl.classList.remove('show');
+    });
+  });
+}
+initMetricTooltips();
+
+// ============================================================
 // SECCIÓN F — NAVEGACIÓN (panels, drawer)
 // ============================================================
 function goTo(panel) {
@@ -712,7 +757,7 @@ function applyLang() {
   const map = {
     't-nav-resumen': 'nav_resumen', 't-dnav-resumen': 'dnav_resumen',
     't-nav-llamadas': 'nav_llamadas', 't-dnav-llamadas': 'dnav_llamadas',
-    't-logo-sub': 'logo_sub',
+    't-logo-sub': 'logo_sub', 't-footer-brand': 'footer_brand', 't-footer-brand-drawer': 'footer_brand',
     't-period-hoy': 'period_hoy', 't-period-semana': 'period_semana',
     't-period-mes': 'period_mes', 't-period-todo': 'period_todo',
     't-kpi-total': 'kpi_total', 't-kpi-cierre': 'kpi_cierre',
@@ -727,14 +772,6 @@ function applyLang() {
   for (const id in map) {
     const el = document.getElementById(id);
     if (el) el.textContent = t(map[id]);
-  }
-  const tipMap = {
-    't-tip-total': 'tip_total', 't-tip-cierre': 'tip_cierre',
-    't-tip-duracion': 'tip_duracion', 't-tip-followup': 'tip_followup'
-  };
-  for (const id in tipMap) {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = t(tipMap[id]);
   }
   document.getElementById('call-search').placeholder = t('search_ph');
   const activePanel = document.querySelector('.panel.active').id.replace('panel-', '');
